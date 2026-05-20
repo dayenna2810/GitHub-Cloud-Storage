@@ -53,6 +53,52 @@ const elements = {
     folderStorageUsage: document.getElementById('folder-storage-usage')
 };
 
+// --- BOTÃO VOLTAR (NOVO) ---
+function createBackButton() {
+    if (document.getElementById('back-button')) return;
+    
+    const backBtn = document.createElement('button');
+    backBtn.id = 'back-button';
+    backBtn.className = 'px-3 py-2 rounded-xl bg-slate-100 text-slate-600 hover:bg-indigo-100 hover:text-indigo-600 transition flex items-center gap-2 text-sm font-bold';
+    backBtn.innerHTML = '<i class="fas fa-arrow-left"></i> Voltar';
+    backBtn.onclick = goBack;
+    
+    // Insere ao lado do botão "Nova Pasta"
+    const newFolderBtn = elements.btnNewFolder;
+    if (newFolderBtn && newFolderBtn.parentNode) {
+        newFolderBtn.parentNode.insertBefore(backBtn, newFolderBtn);
+    } else {
+        // Fallback: insere no container de breadcrumbs
+        const breadcrumbParent = elements.breadcrumbs?.parentNode;
+        if (breadcrumbParent) breadcrumbParent.prepend(backBtn);
+    }
+    
+    updateBackButton();
+}
+
+function updateBackButton() {
+    const backBtn = document.getElementById('back-button');
+    if (!backBtn) return;
+    
+    if (!state.currentPath) {
+        backBtn.disabled = true;
+        backBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        backBtn.classList.remove('hover:bg-indigo-100', 'hover:text-indigo-600');
+    } else {
+        backBtn.disabled = false;
+        backBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        backBtn.classList.add('hover:bg-indigo-100', 'hover:text-indigo-600');
+    }
+}
+
+function goBack() {
+    if (!state.currentPath) return;
+    const parts = state.currentPath.split('/');
+    parts.pop();
+    const parentPath = parts.join('/');
+    loadFiles(parentPath);
+}
+
 // --- BARRA DE CONTROLO VISUAL ---
 function createViewControls() {
     if (document.getElementById('view-controls')) return;
@@ -477,6 +523,7 @@ async function loadFiles(path = state.currentPath) {
     state.currentPath = path;
     updateStatus('A ler diretório...');
     renderBreadcrumbs();
+    updateBackButton();  // Atualiza estado do botão Voltar
     
     try {
         const res = await fetch(`https://api.github.com/repos/${state.owner}/${state.repo}/contents/${path}`, {
@@ -679,6 +726,7 @@ async function init() {
     }
     createPreviewModal();
     createViewControls();
+    createBackButton();   // Cria o botão Voltar
 }
 
 elements.btnLogin.onclick = login;
